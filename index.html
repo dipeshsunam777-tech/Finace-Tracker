@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#1F3864">
+<title>Finance Tracker</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  /* ── Reset & Base ──────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy:       #1F3864;
+    --navy-mid:   #2E4057;
+    --navy-light: #3A5070;
+    --gold:       #C9A84C;
+    --gold-light: #E8C96A;
+    --teal:       #3DBFBF;
+    --coral:      #E07B54;
+    --sage:       #6BAF8B;
+    --bg:         #F0F4FA;
+    --card:       #FFFFFF;
+    --text:       #1A2840;
+    --muted:      #7A90AA;
+    --border:     #D0DCF0;
+    --income-bg:  #EBF3FB;
+    --expense-bg: #FEF9E7;
+    --transfer-bg:#EAF4EC;
+    --radius:     16px;
+    --radius-sm:  10px;
+    --shadow:     0 4px 24px rgba(31,56,100,0.10);
+    --shadow-lg:  0 8px 40px rgba(31,56,100,0.16);
+  }
+
+  html, body {
+    height: 100%;
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ── Layout ────────────────────────────────────────────────────── */
+  .app {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    max-width: 480px;
+    margin: 0 auto;
+    position: relative;
+  }
+
+  /* ── Header ────────────────────────────────────────────────────── */
+  .header {
+    background: linear-gradient(160deg, var(--navy) 0%, var(--navy-mid) 100%);
+    padding: 52px 24px 32px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(201,168,76,0.12);
+    pointer-events: none;
+  }
+  .header::after {
+    content: '';
+    position: absolute;
+    bottom: -40px; left: -40px;
+    width: 140px; height: 140px;
+    border-radius: 50%;
+    background: rgba(61,191,191,0.08);
+    pointer-events: none;
+  }
+
+  .header-icon {
+    font-size: 28px;
+    margin-bottom: 8px;
+    display: block;
+  }
+
+  .header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -0.5px;
+    line-height: 1.2;
+  }
+
+  .header p {
+    font-size: 13px;
+    color: rgba(255,255,255,0.55);
+    margin-top: 4px;
+    font-weight: 300;
+  }
+
+  /* ── Setup Banner ──────────────────────────────────────────────── */
+  .setup-banner {
+    background: #FFF8E6;
+    border-left: 3px solid var(--gold);
+    margin: 20px 16px 0;
+    padding: 12px 14px;
+    border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+    font-size: 12px;
+    color: #7A5C00;
+    line-height: 1.6;
+    display: none;
+  }
+  .setup-banner.visible { display: block; }
+  .setup-banner strong { font-weight: 600; display: block; margin-bottom: 2px; }
+
+  /* ── Form Card ─────────────────────────────────────────────────── */
+  .form-card {
+    margin: 20px 16px 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    flex: 1;
+  }
+
+  .form-body {
+    padding: 24px 20px 8px;
+  }
+
+  /* ── Category Pills ────────────────────────────────────────────── */
+  .field-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .cat-pill {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 14px 8px;
+    border-radius: var(--radius-sm);
+    border: 2px solid var(--border);
+    cursor: pointer;
+    transition: all 0.18s ease;
+    background: var(--bg);
+    gap: 6px;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+  }
+
+  .cat-pill .pill-icon { font-size: 22px; }
+  .cat-pill .pill-label {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  .cat-pill.income   { --accent: var(--teal);  --accent-bg: var(--income-bg);  }
+  .cat-pill.expenses { --accent: var(--coral);  --accent-bg: var(--expense-bg); }
+  .cat-pill.transfer { --accent: var(--sage);   --accent-bg: var(--transfer-bg);}
+
+  .cat-pill.active {
+    border-color: var(--accent);
+    background: var(--accent-bg);
+  }
+  .cat-pill.active .pill-label { color: var(--accent); }
+  .cat-pill:active { transform: scale(0.96); }
+
+  /* ── Field ─────────────────────────────────────────────────────── */
+  .field { margin-bottom: 20px; }
+
+  .input-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .input-prefix {
+    position: absolute;
+    left: 14px;
+    font-size: 16px;
+    color: var(--muted);
+    pointer-events: none;
+    font-family: 'DM Mono', monospace;
+  }
+
+  input, textarea {
+    width: 100%;
+    padding: 14px 14px 14px 14px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px; /* prevents iOS zoom */
+    color: var(--text);
+    background: var(--bg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-sm);
+    outline: none;
+    transition: border-color 0.18s;
+    -webkit-appearance: none;
+  }
+
+  input.has-prefix { padding-left: 28px; }
+  input:focus, textarea:focus { border-color: var(--navy); }
+
+  .amount-input {
+    font-family: 'DM Mono', monospace;
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: -0.5px;
+    padding-left: 30px !important;
+  }
+
+  .amount-hint {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    padding-left: 2px;
+  }
+
+  textarea {
+    resize: none;
+    height: 82px;
+    line-height: 1.5;
+    font-size: 15px;
+  }
+
+  input[type="date"] {
+    color: var(--text);
+  }
+
+  /* ── Divider ───────────────────────────────────────────────────── */
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0 20px;
+  }
+
+  /* ── Submit ────────────────────────────────────────────────────── */
+  .submit-wrap {
+    padding: 0 20px 28px;
+  }
+
+  .btn-submit {
+    width: 100%;
+    padding: 17px;
+    background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.18s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    -webkit-tap-highlight-color: transparent;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .btn-submit:active { transform: scale(0.98); opacity: 0.92; }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .btn-submit .btn-arrow { font-size: 18px; transition: transform 0.2s; }
+  .btn-submit:not(:disabled):active .btn-arrow { transform: translateX(4px); }
+
+  /* ── Toast ─────────────────────────────────────────────────────── */
+  .toast {
+    position: fixed;
+    bottom: 32px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--navy);
+    color: #fff;
+    padding: 14px 22px;
+    border-radius: 50px;
+    font-size: 14px;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: var(--shadow-lg);
+    transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.error { background: #C0392B; }
+
+  .toast-icon { font-size: 16px; }
+
+  /* ── Loading spinner ───────────────────────────────────────────── */
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    display: none;
+  }
+  .btn-submit.loading .spinner { display: block; }
+  .btn-submit.loading .btn-text,
+  .btn-submit.loading .btn-arrow { opacity: 0; }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* ── Amount preview ────────────────────────────────────────────── */
+  .amount-preview {
+    display: none;
+    background: var(--bg);
+    border: 2px solid var(--gold);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    margin-top: 8px;
+    font-family: 'DM Mono', monospace;
+    font-size: 18px;
+    font-weight: 500;
+    color: var(--navy);
+    animation: fadeIn 0.2s ease;
+  }
+  .amount-preview.visible { display: flex; align-items: center; gap: 8px; }
+  .amount-preview .preview-label {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-right: auto;
+  }
+
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; } }
+
+  /* ── URL Config Area ───────────────────────────────────────────── */
+  .config-section {
+    margin: 0 16px 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+
+  .config-toggle {
+    width: 100%;
+    padding: 14px 20px;
+    background: none;
+    border: none;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .config-toggle .toggle-arrow { transition: transform 0.2s; font-size: 12px; }
+  .config-toggle.open .toggle-arrow { transform: rotate(180deg); }
+
+  .config-body {
+    padding: 0 20px 20px;
+    display: none;
+  }
+  .config-body.open { display: block; }
+
+  .config-body input {
+    font-size: 13px;
+    padding: 10px 12px;
+    font-family: 'DM Mono', monospace;
+  }
+
+  .config-body p {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.6;
+  }
+
+  .btn-save-config {
+    margin-top: 10px;
+    width: 100%;
+    padding: 10px;
+    background: var(--navy);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  /* ── Footer ────────────────────────────────────────────────────── */
+  .footer {
+    text-align: center;
+    padding: 12px 0 32px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <span class="header-icon">📊</span>
+    <h1>Finance Tracker</h1>
+    <p>Log income, expenses &amp; transfers</p>
+  </div>
+
+  <!-- Setup notice (shown when no URL configured) -->
+  <div class="setup-banner" id="setupBanner">
+    <strong>⚙️ Google Sheet not connected yet</strong>
+    Open the Settings section below, paste your Apps Script Web App URL, and tap Save.
+  </div>
+
+  <!-- Main form -->
+  <div class="form-card">
+    <div class="form-body">
+
+      <!-- Category -->
+      <span class="field-label">Category</span>
+      <div class="category-grid">
+        <div class="cat-pill income active" data-value="Income" onclick="selectCategory(this)">
+          <span class="pill-icon">💰</span>
+          <span class="pill-label">Income</span>
+        </div>
+        <div class="cat-pill expenses" data-value="Expenses" onclick="selectCategory(this)">
+          <span class="pill-icon">🧾</span>
+          <span class="pill-label">Expenses</span>
+        </div>
+        <div class="cat-pill transfer" data-value="Transfer to Savings" onclick="selectCategory(this)">
+          <span class="pill-icon">🏦</span>
+          <span class="pill-label">Save</span>
+        </div>
+      </div>
+
+      <!-- Amount -->
+      <div class="field">
+        <label class="field-label" for="amount">Amount</label>
+        <div class="input-wrap">
+          <span class="input-prefix">$</span>
+          <input
+            type="text"
+            id="amount"
+            class="amount-input has-prefix"
+            inputmode="decimal"
+            placeholder="0.00  or  50+60+30"
+            autocomplete="off"
+            oninput="previewAmount()"
+          >
+        </div>
+        <div class="amount-preview" id="amountPreview">
+          <span class="preview-label">Total</span>
+          <span id="previewValue">$0.00</span>
+        </div>
+        <div class="amount-hint">Tip: type <code>50+60+30</code> to add multiple amounts</div>
+      </div>
+
+      <!-- Date -->
+      <div class="field">
+        <label class="field-label" for="date">Date</label>
+        <input type="date" id="date">
+      </div>
+
+      <div class="divider"></div>
+
+      <!-- Notes -->
+      <div class="field">
+        <label class="field-label" for="notes">Notes <span style="font-weight:400;text-transform:none;font-size:10px;">(optional)</span></label>
+        <textarea id="notes" placeholder="e.g. Salary, grocery run, coffee…"></textarea>
+      </div>
+
+    </div>
+
+    <!-- Submit -->
+    <div class="submit-wrap">
+      <button class="btn-submit" id="submitBtn" onclick="submitForm()">
+        <div class="spinner"></div>
+        <span class="btn-text">Save to Sheet</span>
+        <span class="btn-arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Settings / URL config -->
+  <div class="config-section">
+    <button class="config-toggle" id="configToggle" onclick="toggleConfig()">
+      <span>⚙️ &nbsp;Google Sheet Settings</span>
+      <span class="toggle-arrow">▼</span>
+    </button>
+    <div class="config-body" id="configBody">
+      <label class="field-label" for="scriptUrl">Apps Script Web App URL</label>
+      <input type="url" id="scriptUrl" placeholder="https://script.google.com/macros/s/…/exec">
+      <p>
+        1. Open your Google Sheet → <strong>Extensions → Apps Script</strong><br>
+        2. Paste the <code>google_apps_script.js</code> code<br>
+        3. Click <strong>Deploy → New Deployment → Web App</strong><br>
+        4. Set <em>Execute as: Me</em> · <em>Who has access: Anyone</em><br>
+        5. Copy the URL and paste it above
+      </p>
+      <button class="btn-save-config" onclick="saveConfig()">Save URL</button>
+    </div>
+  </div>
+
+  <div class="footer">Entries go directly into your Google Sheet</div>
+</div>
+
+<!-- Toast notification -->
+<div class="toast" id="toast">
+  <span class="toast-icon" id="toastIcon">✓</span>
+  <span id="toastMsg">Saved!</span>
+</div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────
+const STORAGE_KEY = "financeTrackerUrl";
+let selectedCategory = "Income";
+
+// ── Init ───────────────────────────────────────────────────────────
+window.addEventListener("DOMContentLoaded", () => {
+  // Set today's date
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+
+  // Load saved URL
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    document.getElementById("scriptUrl").value = saved;
+  } else {
+    document.getElementById("setupBanner").classList.add("visible");
+  }
+});
+
+// ── Category selection ─────────────────────────────────────────────
+function selectCategory(el) {
+  document.querySelectorAll(".cat-pill").forEach(p => p.classList.remove("active"));
+  el.classList.add("active");
+  selectedCategory = el.dataset.value;
+}
+
+// ── Amount preview (calculator mode) ──────────────────────────────
+function previewAmount() {
+  const raw = document.getElementById("amount").value.trim();
+  const preview = document.getElementById("amountPreview");
+  const previewVal = document.getElementById("previewValue");
+
+  // Only show preview if there's a + or - in the expression
+  if (!raw || !/[+\-]/.test(raw)) {
+    preview.classList.remove("visible");
+    return;
+  }
+
+  const result = evalAmount(raw);
+  if (result !== null && !isNaN(result)) {
+    previewVal.textContent = "$" + result.toFixed(2);
+    preview.classList.add("visible");
+  } else {
+    preview.classList.remove("visible");
+  }
+}
+
+function evalAmount(raw) {
+  // Allow only digits, +, -, ., and spaces
+  const sanitised = raw.replace(/[^0-9+\-. ]/g, "");
+  if (!sanitised) return null;
+  try {
+    // Safe eval: only allow numbers and basic operators
+    const result = Function('"use strict"; return (' + sanitised + ')')();
+    return typeof result === "number" && isFinite(result) ? result : null;
+  } catch { return null; }
+}
+
+function resolveAmount() {
+  const raw = document.getElementById("amount").value.trim();
+  if (!raw) return null;
+  const direct = parseFloat(raw);
+  if (!isNaN(direct) && String(direct) === raw) return direct; // plain number
+  return evalAmount(raw);
+}
+
+// ── Config ─────────────────────────────────────────────────────────
+function toggleConfig() {
+  const body = document.getElementById("configBody");
+  const btn  = document.getElementById("configToggle");
+  body.classList.toggle("open");
+  btn.classList.toggle("open");
+}
+
+function saveConfig() {
+  const url = document.getElementById("scriptUrl").value.trim();
+  if (!url) { showToast("Please enter a URL", true); return; }
+  localStorage.setItem(STORAGE_KEY, url);
+  document.getElementById("setupBanner").classList.remove("visible");
+  showToast("URL saved ✓");
+  document.getElementById("configBody").classList.remove("open");
+  document.getElementById("configToggle").classList.remove("open");
+}
+
+// ── Submit ─────────────────────────────────────────────────────────
+async function submitForm() {
+  const scriptUrl = localStorage.getItem(STORAGE_KEY) || document.getElementById("scriptUrl").value.trim();
+  if (!scriptUrl) {
+    showToast("Add your Apps Script URL in Settings", true);
+    toggleConfig();
+    return;
+  }
+
+  const amount = resolveAmount();
+  if (amount === null || isNaN(amount) || amount <= 0) {
+    showToast("Enter a valid amount", true);
+    document.getElementById("amount").focus();
+    return;
+  }
+
+  const date  = document.getElementById("date").value;
+  const notes = document.getElementById("notes").value.trim();
+
+  if (!date) { showToast("Pick a date", true); return; }
+
+  const btn = document.getElementById("submitBtn");
+  btn.classList.add("loading");
+  btn.disabled = true;
+
+  const payload = { category: selectedCategory, amount, date, notes };
+
+  try {
+    // Use no-cors mode to avoid CORS preflight issues with Apps Script
+    await fetch(scriptUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    // no-cors means we can't read the response — assume success
+    showToast("✓ Saved to your Sheet!");
+    resetForm();
+  } catch (err) {
+    showToast("Network error — check connection", true);
+    console.error(err);
+  } finally {
+    btn.classList.remove("loading");
+    btn.disabled = false;
+  }
+}
+
+function resetForm() {
+  document.getElementById("amount").value = "";
+  document.getElementById("notes").value = "";
+  document.getElementById("amountPreview").classList.remove("visible");
+  // Reset date to today
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, "0");
+  const dd = String(today.getDate()).padStart(2, "0");
+  document.getElementById("date").value = `${yyyy}-${mm}-${dd}`;
+}
+
+// ── Toast ──────────────────────────────────────────────────────────
+let toastTimer;
+function showToast(msg, isError = false) {
+  const toast = document.getElementById("toast");
+  const toastMsg = document.getElementById("toastMsg");
+  const toastIcon = document.getElementById("toastIcon");
+
+  toastMsg.textContent = msg;
+  toastIcon.textContent = isError ? "✕" : "✓";
+  toast.classList.toggle("error", isError);
+  toast.classList.add("show");
+
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>
